@@ -12,6 +12,9 @@ class Variable:
         self.creator = func
 
     def back_prop(self):
+        if self.grad is None:
+            self.grad = np.ones_like(self.data)
+
         f = self.creator
         if f is not None:
             # y = f(x)

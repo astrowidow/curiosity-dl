@@ -55,6 +55,10 @@ class Squared(Function):
         return dl_dx
 
 
+def squared(x):
+    return Squared()(x)
+
+
 class Exp(Function):
     def forward(self, x):
         return np.exp(x)
@@ -64,3 +68,7 @@ class Exp(Function):
         dy_dx = np.exp(x)
         dl_dx = dl_dy*dy_dx
         return dl_dx
+
+
+def exp(x):
+    return Exp()(x)

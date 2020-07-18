@@ -59,7 +59,7 @@ class Function:
 
 
 # Element functions
-class Squared(Function):
+class Square(Function):
     def forward(self, x):
         return x**2
 
@@ -70,8 +70,8 @@ class Squared(Function):
         return dl_dx
 
 
-def squared(x):
-    return Squared()(x)
+def square(x):
+    return Square()(x)
 
 
 class Exp(Function):

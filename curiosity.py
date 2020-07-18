@@ -1,4 +1,5 @@
 import numpy as np
+import heapq
 
 
 # Base classes
@@ -11,9 +12,12 @@ class Variable:
         self.data = data
         self.grad = None
         self.creator = None
+        self.generation = 0
 
     def set_creator(self, func):
         self.creator = func
+        # Generation is defined as negative number for 'heapq'
+        self.generation = func.generation - 1
 
     def clear_grad(self):
         self.grad = None
@@ -22,15 +26,28 @@ class Variable:
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
-        f = self.creator
-        if f is not None:
+        funcs = []
+        pushed_func_set = set()
+
+        def push_func(func):
+            if func not in pushed_func_set:
+                heapq.heappush(funcs, func)
+                # For example,
+                # even when a 'Variable' is used as an argument to two or more functions,
+                # the creator of the 'Variable' should be referenced only one time.
+                pushed_func_set.add(func)
+
+        push_func(self.creator)
+        while funcs:
+            f = heapq.heappop(funcs)
             # y = f(x)
             # extracts the input variables 'x'
             x_tuple = f.input_variables
+            y_variable = f.output_variable
             # dL/dx = dy/dx * dL/dy
             # dy/dx: df/dx
             # dL/dy: self.grad (It is assumed that there is only one output of 'f')
-            x_grad_tuple = f.backward(self.grad)
+            x_grad_tuple = f.backward(y_variable.grad)
             if not isinstance(x_grad_tuple, tuple):
                 x_grad_tuple = (x_grad_tuple,)
             for x_variable, x_grad in zip(x_tuple, x_grad_tuple):
@@ -40,8 +57,10 @@ class Variable:
                     # An implementation of 'x_variable.grad += x_grad' cannot be used.
                     # Because 'x_grad' has type of 'ndarray',
                     # 'x_grad' may be REFERENCE to 'y_grad'.
+                    # This may cause overwriting 'y_grad'.
                     x_variable.grad = x_variable.grad + x_grad
-                x_variable.back_prop()
+                if x_variable.creator is not None:
+                    push_func(x_variable.creator)
 
 
 def as_array(x):
@@ -52,9 +71,10 @@ def as_array(x):
 
 class Function:
     def __call__(self, *input_variables):
-        # allows multiple arguments
+        # Holds for 'back_prop'
         self.input_variables = input_variables
         x_tuple = (input_val.data for input_val in input_variables)
+        self.generation = min([input_val.generation for input_val in input_variables])
         # y = f(x)
         # 'x' is 'tuple' of 'ndarray' because of the case that there are multiple inputs
         # 'y' is assumed that its type is 'ndarray'
@@ -63,7 +83,12 @@ class Function:
         # 'as_array' turns type 'scalar' into type 'ndarray'
         output_variable = Variable(as_array(y))
         output_variable.set_creator(self)
+        # Holds for 'back_prop'
+        self.output_variable = output_variable
         return output_variable
+
+    def __lt__(self, other):
+        return self.generation < other.generation
 
     def forward(self, x):
         raise NotImplementedError()

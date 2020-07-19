@@ -1,6 +1,25 @@
-import numpy as np
 import heapq
 import weakref
+import contextlib
+import numpy as np
+
+
+class Config:
+    enable_back_prop = True
+
+
+@contextlib.contextmanager
+def using_config(name, value):
+    old_value = getattr(Config, name)
+    setattr(Config, name, value)
+    try:
+        yield
+    finally:
+        setattr(Config, name, old_value)
+
+
+def no_grad():
+    return using_config('enable_back_prop', False)
 
 
 # Base classes
@@ -23,7 +42,7 @@ class Variable:
     def clear_grad(self):
         self.grad = None
 
-    def back_prop(self):
+    def back_prop(self, retain_grad=False):
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
@@ -64,6 +83,9 @@ class Variable:
                 if x_variable.creator is not None:
                     push_func(x_variable.creator)
 
+            if not retain_grad:
+                y_variable.grad = None
+
 
 def as_array(x):
     if np.isscalar(x):
@@ -73,10 +95,7 @@ def as_array(x):
 
 class Function:
     def __call__(self, *input_variables):
-        # Holds for 'back_prop'
-        self.input_variables = input_variables
         x_tuple = (input_val.data for input_val in input_variables)
-        self.generation = min([input_val.generation for input_val in input_variables])
         # y = f(x)
         # 'x' is 'tuple' of 'ndarray' because of the case that there are multiple inputs
         # 'y' is assumed that its type is 'ndarray'
@@ -84,12 +103,14 @@ class Function:
         # There is the case that 'y' is returned as scalar
         # 'as_array' turns type 'scalar' into type 'ndarray'
         output_variable = Variable(as_array(y))
-        output_variable.set_creator(self)
-        # Holds for 'back_prop'
-        # Because 'Function.output_variable' and 'Variable.creator' form a circular reference,
-        # it's needed to referenced weakly.
-        # self.output_variable = output_variable
-        self.output_variable = weakref.ref(output_variable)
+        if Config.enable_back_prop:
+            self.input_variables = input_variables
+            self.generation = min([input_val.generation for input_val in input_variables])
+            output_variable.set_creator(self)
+            # Because 'Function.output_variable' and 'Variable.creator' form a circular reference,
+            # it's needed to be referenced weakly.
+            # self.output_variable = output_variable
+            self.output_variable = weakref.ref(output_variable)
         return output_variable
 
     def __lt__(self, other):

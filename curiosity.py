@@ -1,5 +1,6 @@
 import numpy as np
 import heapq
+import weakref
 
 
 # Base classes
@@ -43,7 +44,8 @@ class Variable:
             # y = f(x)
             # extracts the input variables 'x'
             x_tuple = f.input_variables
-            y_variable = f.output_variable
+            # y_variable = f.output_variable
+            y_variable = f.output_variable()
             # dL/dx = dy/dx * dL/dy
             # dy/dx: df/dx
             # dL/dy: self.grad (It is assumed that there is only one output of 'f')
@@ -84,7 +86,10 @@ class Function:
         output_variable = Variable(as_array(y))
         output_variable.set_creator(self)
         # Holds for 'back_prop'
-        self.output_variable = output_variable
+        # Because 'Function.output_variable' and 'Variable.creator' form a circular reference,
+        # it's needed to referenced weakly.
+        # self.output_variable = output_variable
+        self.output_variable = weakref.ref(output_variable)
         return output_variable
 
     def __lt__(self, other):

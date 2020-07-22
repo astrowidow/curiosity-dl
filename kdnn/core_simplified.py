@@ -272,44 +272,14 @@ def pow(x, c):
     return Pow(c)(x)
 
 
-Variable.__neg__ = neg
-Variable.__add__ = add
-Variable.__radd__ = add
-Variable.__sub__ = sub
-Variable.__rsub__ = rsub
-Variable.__mul__ = mul
-Variable.__rmul__ = mul
-Variable.__truediv__ = div
-Variable.__rtruediv__ = rdiv
-Variable.__pow__ = pow
-
-
-# Element functions
-class Square(Function):
-    def forward(self, x):
-        return x**2
-
-    def backward(self, dl_dy):
-        x = self.input_variables[0].data
-        dy_dx = 2*x
-        dl_dx = dl_dy*dy_dx
-        return dl_dx
-
-
-def square(x):
-    return Square()(x)
-
-
-class Exp(Function):
-    def forward(self, x):
-        return np.exp(x)
-
-    def backward(self, dl_dy):
-        x = self.input_variables[0].data
-        dy_dx = np.exp(x)
-        dl_dx = dl_dy*dy_dx
-        return dl_dx
-
-
-def exp(x):
-    return Exp()(x)
+def setup_variable():
+    Variable.__neg__ = neg
+    Variable.__add__ = add
+    Variable.__radd__ = add
+    Variable.__sub__ = sub
+    Variable.__rsub__ = rsub
+    Variable.__mul__ = mul
+    Variable.__rmul__ = mul
+    Variable.__truediv__ = div
+    Variable.__rtruediv__ = rdiv
+    Variable.__pow__ = pow

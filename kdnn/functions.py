@@ -1,5 +1,5 @@
 import numpy as np
-from kdnn.core_simplified import Function
+from kdnn.core import Function
 
 
 class Square(Function):

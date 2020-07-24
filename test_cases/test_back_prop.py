@@ -5,7 +5,7 @@ if '__file__' in globals():
 
 import numpy as np
 from kdnn import Variable
-from kdnn.core_simplified import add, neg, sub, mul, div, rsub, rdiv, pow
+from kdnn.core import add, neg, sub, mul, div, rsub, rdiv, pow
 from kdnn.functions import square, exp
 import unittest
 
@@ -48,39 +48,39 @@ class BackProp(unittest.TestCase):
         y = f(x)
         y.back_prop(retain_grad)
         expected = numerical_diff_arg_1(f, x)
-        flg = np.allclose(x.grad, expected)
+        flg = np.allclose(x.grad.data, expected)
         self.assertTrue(flg)
         if retain_grad:
-            flg = np.allclose(y.grad, np.ones_like(y.data))
+            flg = np.allclose(y.grad.data, np.ones_like(y.data))
             self.assertTrue(flg)
         else:
             self.assertEqual(y.grad, None)
 
     def compare_numerical_arg_2(self, f):
-        x0 = Variable(np.random.rand(1))
-        x1 = Variable(np.random.rand(1))
+        x0 = Variable(100*np.random.rand(1) + 1)
+        x1 = Variable(100*np.random.rand(1) + 1)
         y = f(x0, x1)
         y.back_prop(True)
 
         expected = numerical_diff_arg_2_1(f, x0, x1)
-        flg = np.allclose(x0.grad, expected)
+        flg = np.allclose(x0.grad.data, expected)
         self.assertTrue(flg)
-        flg = np.allclose(y.grad, np.ones_like(y.data))
+        flg = np.allclose(y.grad.data, np.ones_like(y.data))
         self.assertTrue(flg)
 
         expected = numerical_diff_arg_2_2(f, x0, x1)
-        flg = np.allclose(x1.grad, expected)
+        flg = np.allclose(x1.grad.data, expected)
         self.assertTrue(flg)
-        flg = np.allclose(y.grad, np.ones_like(y.data))
+        flg = np.allclose(y.grad.data, np.ones_like(y.data))
         self.assertTrue(flg)
 
         x0 = Variable(np.random.rand(1))
         y = f(x0, x0)
         y.back_prop(True)
         expected = numerical_diff_arg_2_0(f, x0)
-        flg = np.allclose(x0.grad, expected)
+        flg = np.allclose(x0.grad.data, expected)
         self.assertTrue(flg)
-        flg = np.allclose(y.grad, np.ones_like(y.data))
+        flg = np.allclose(y.grad.data, np.ones_like(y.data))
         self.assertTrue(flg)
 
     def test_squared(self):
@@ -110,7 +110,7 @@ class BackProp(unittest.TestCase):
         self.compare_numerical_arg_2(rdiv)
 
     def test_pow(self):
-        x = Variable(np.random.rand(1))
+        x = Variable(100*np.random.rand(1) + 1)
         c = np.random.rand(1)
         y = pow(x, c)
         y.back_prop()
@@ -123,7 +123,7 @@ class BackProp(unittest.TestCase):
         y_plus = pow(x_plus, c)
         expected = (y_plus.data - y_minus.data) / (2 * eps)
 
-        flg = np.allclose(x.grad, expected)
+        flg = np.allclose(x.grad.data, expected)
         self.assertTrue(flg)
 
     def test_loop_topology(self):
@@ -132,7 +132,7 @@ class BackProp(unittest.TestCase):
         y = a*a + a*a
         y.back_prop()
 
-        flg = np.allclose(x.grad, np.array(64.0))
+        flg = np.allclose(x.grad.data, np.array(64.0))
         self.assertTrue(flg)
 
     def test_sphere_func(self):

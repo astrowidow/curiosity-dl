@@ -6,7 +6,7 @@ if '__file__' in globals():
 import numpy as np
 from kdnn import Variable
 from kdnn.core import add, neg, sub, mul, div, rsub, rdiv, pow
-from kdnn.functions import square, exp
+import kdnn.functions as kf
 import unittest
 
 
@@ -84,12 +84,24 @@ class BackProp(unittest.TestCase):
         self.assertTrue(flg)
 
     def test_squared(self):
-        self.compare_numerical_arg_1(square, True)
-        self.compare_numerical_arg_1(square, False)
+        self.compare_numerical_arg_1(kf.square, True)
+        self.compare_numerical_arg_1(kf.square, False)
 
     def test_exp(self):
-        self.compare_numerical_arg_1(exp, True)
-        self.compare_numerical_arg_1(exp, False)
+        self.compare_numerical_arg_1(kf.exp, True)
+        self.compare_numerical_arg_1(kf.exp, False)
+
+    def test_sin(self):
+        self.compare_numerical_arg_1(kf.sin, True)
+        self.compare_numerical_arg_1(kf.sin, False)
+
+    def test_cos(self):
+        self.compare_numerical_arg_1(kf.cos, True)
+        self.compare_numerical_arg_1(kf.cos, False)
+
+    def test_tanh(self):
+        self.compare_numerical_arg_1(kf.tanh, True)
+        self.compare_numerical_arg_1(kf.tanh, False)
 
     def test_neg(self):
         self.compare_numerical_arg_1(neg, True)
